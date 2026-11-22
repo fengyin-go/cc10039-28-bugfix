@@ -1,4 +1,4 @@
-import { request } from './client'
+import { fetchJson, request } from './client'
 import { moduleMeta } from '@/data/modules'
 import type { ActionResult, EntryRow, OverviewResult, PageResult } from '@/data/types'
 
@@ -52,6 +52,14 @@ export async function downloadEntries(
   anchor.click()
   document.body.removeChild(anchor)
   URL.revokeObjectURL(url)
+}
+
+/** 读取单条记录详情（回填任务带可续做分区清单，保留策略带读取位置和回执）。 */
+export async function getEntryDetail(
+  key: string,
+  id: number,
+): Promise<Record<string, unknown>> {
+  return await fetchJson(`/api/${key}/${id}`)
 }
 
 export async function loadOverview(): Promise<OverviewResult> {

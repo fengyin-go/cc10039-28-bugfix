@@ -79,7 +79,23 @@ def get_entry(module: str, entry_id: int) -> dict[str, Any]:
     entry = service.get_entry(entry_id)
     if entry is None:
         raise HTTPException(status_code=404, detail=f"{service.ENTITY} {entry_id} 不存在或已归档")
+    view_info = getattr(service, "view_entry", None)
+    if callable(view_info):
+        return view_info(entry_id) or entry
     return entry
+
+
+@router.get("/{module}/{entry_id}/resume-plan", response_model=dict)
+def get_resume_plan(module: str, entry_id: int) -> dict[str, Any]:
+    """回填续做入口：返回可续做的分区清单，不改变检查点。"""
+    service = require_service(module)
+    plan_builder = getattr(service, "resume_plan", None)
+    if not callable(plan_builder):
+        raise HTTPException(status_code=404, detail=f"{module} 不支持续做计划")
+    plan = plan_builder(entry_id)
+    if plan is None:
+        raise HTTPException(status_code=404, detail=f"{service.ENTITY} {entry_id} 不存在或已归档")
+    return plan
 
 
 @router.post("/{module}", response_model=ActionResult)
